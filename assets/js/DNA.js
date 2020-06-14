@@ -18,9 +18,9 @@ class DNA {
 
         return round(distance);
     }
-
-    calcFitness(fitnessFunc) {
-        this.fitness = fitnessFunc(this.locations);
+    //function passed in to store fitness level in object.
+    setFitness(fitness) {
+        this.fitness = fitness;
     }
 
     render() {
