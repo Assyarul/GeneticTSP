@@ -16,11 +16,14 @@ class GeneticAlgorithm {
     //initialize population with designated generate algorithm
     initialize(total) {
         for (let i=0; i<this.numLocation;i++){
-            this.map.add(new Location(random(0,width),random(0,height))); //add this.numLocation random points to map
+            this.map.add(new Location(random(0,this.width),random(0,this.height))); //add this.numLocation random points to map
         }
 
         this.total = total;
+        this.numGenerations = 1; // initial population set as 1st generation.
         this.totalFitness = 0; //sum of total fitness values in the population. will be used for normalizing
+        this.bestFitness = new DNA(); // point to member with best fitness
+        this.init= true;
         this.generatePopulation();
     }
 
@@ -31,23 +34,50 @@ class GeneticAlgorithm {
             this.population.push(member);
             member.setFitness(this.fitness(member));
             this.totalFitness += member.fitness;
-        }
-        this.normalizeFitness();
 
-        let accprob = 0;
-        for (let i = 0; i < this.total; i++) {
-            accprob += this.population[i].fitness;
+            //determine if fitter member exist and change accordingly
+            if (member.fitness > this.bestFitness.fitness){
+                this.bestFitness = member;
+            }
         }
-        
-        console.log("Total Prob: " + accprob);
     }
 
     createNewGen() {
         if (!this.init) {
             console.error("Genetic Algorithm has not been initialized");
         } else {
-            let newGen = [];
- 
+            let newGen=[];
+            let newTotalFitness = 0;
+            while (newGen.length < this.total) {
+                //for now ignore case parent1 == parent2. will definitely lead to more homogeny in population at later stages.
+                let parent1 = this.selectOne();
+                let parent2 = this.selectOne();
+
+                //ordering of parents in crossover matters due to crossover algo implemented
+                let child1 = parent1.crossover(parent2);
+                this.mutate(child1);
+                child1.setFitness(this.fitness(child1));
+                newTotalFitness +=child1.fitness;
+                if (child1.fitness > this.bestFitness.fitness){
+                    this.bestFitness = child1;
+                }
+                newGen.push(child1);
+
+                //if there's still space. probably can refactor code better here.
+                if (newGen.length < this.total) {
+                    let child2 = parent2.crossover(parent1);
+                    this.mutate(child2);
+                    child2.setFitness(this.fitness(child2));
+                    newTotalFitness +=child2.fitness;
+
+                    if (child2.fitness > this.bestFitness.fitness){
+                        this.bestFitness = child2;
+                    }
+                    newGen.push(child2);
+                }
+            }
+            this.population = newGen;
+            this.totalFitness = newTotalFitness;
         }
     }
 
@@ -55,37 +85,28 @@ class GeneticAlgorithm {
     fitness(dna) {
         return 1/dna.getTotalDistance();
     }
-
-    //normalize fitness s.t member.fitness now represents a probability
-    normalizeFitness(){
-        for (let i =0; i< this.total; i++) {
-            let member = this.population[i];
-            member.fitness /= this.totalFitness;
-        }
-    }
-
+    
     //randomly select a member in the population according to its fitness
     //Uses fitness proportionate method
     selectOne(){
-        let randomNum = Math.random();
-        console.log("Selector: "+randomNum);
+        let randomNum = random(0,this.totalFitness);
         let accumulated = 0;
         for (let i =0; i< this.total; i++) {
             let member = this.population[i];
             if (member.fitness + accumulated > randomNum ) {
-                return i;//this.population[i];
+                return this.population[i];
             }
             accumulated += member.fitness;
         }
     }
-    //typical crossover algorithms like single-point will not work given constraints of TSP
-    // use 
-    crossover(a,b) {
 
-    }
-
+    //simple chance for two random locations to swap.
     mutate(a) {
+        let randomNum = Math.random();
 
+        if (randomNum < this.mutationRate) {
+            a.randomSwap();
+        }
     }
 
     //debugging purposes
