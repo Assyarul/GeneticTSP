@@ -3,22 +3,9 @@ class DNA {
         //array of locations
         this.locations = locations;
         this.fitness = 0;
+        this.distance = 0;
     }
 
-    getTotalDistance() {
-        if (this.locations.size==0){
-            return 0;
-        }
-        let previous = this.locations[0];
-        let distance = 0;
-        for (let i=0;i<this.locations.length;i++) {
-            let current = this.locations[i];
-            distance += dist(previous.x,previous.y,current.x,current.y); //use p5.js dist() method
-            previous = current;
-        }
-
-        return round(distance);
-    }
 
     randomSwap(){
         // pick two random indexes, swap them
@@ -73,7 +60,7 @@ class DNA {
         newLocations = firstsection.concat(newLocations);
         return new DNA(newLocations);
     }
-    //function passed in to store fitness level in object.
+
     setFitness(fitness) {
         this.fitness = fitness;
     }
@@ -90,8 +77,7 @@ class DNA {
         }
         line(previous.x,previous.y,this.locations[0].x,this.locations[0].y);
         textSize(20);
-        text("Distance: " + this.getTotalDistance(),width/2,20);
-
+        text("Distance: " + round(this.distance),150,20);
     }
 
     //for debugging purposes

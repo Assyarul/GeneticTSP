@@ -18,6 +18,7 @@ class GeneticAlgorithm {
         for (let i=0; i<this.numLocation;i++){
             this.map.add(new Location(random(0,this.width),random(0,this.height))); //add this.numLocation random points to map
         }
+        this.map.calculateDistances();
 
         this.total = total;
         this.numGenerations = 1; // initial population set as 1st generation.
@@ -56,7 +57,7 @@ class GeneticAlgorithm {
                 //ordering of parents in crossover matters due to crossover algo implemented
                 let child1 = parent1.crossover(parent2);
                 this.mutate(child1);
-                child1.setFitness(this.fitness(child1));
+                child1.setFitness(this.fitness(child1)); 
                 newTotalFitness +=child1.fitness;
                 if (child1.fitness > this.bestFitness.fitness){
                     this.bestFitness = child1;
@@ -82,10 +83,24 @@ class GeneticAlgorithm {
     }
 
     //fitness function just calculate distance between the two points and inverse it. higher total distance -> lower fitness level
+    //side-effect of storing dna distance. 
     fitness(dna) {
-        return 1/dna.getTotalDistance();
+        if (dna.length==0){
+            return 0;
+        }
+        let previous = dna.locations[0];
+        let distance = 0;
+        for (let i=1;i<dna.locations.length;i++) {
+            let current = dna.locations[i];
+            distance += this.map.getDistance(previous,current); 
+            previous = current;
+        }
+        distance+= this.map.getDistance(previous,dna.locations[0]);
+        dna.distance = distance;
+        return 1/distance;
+ 
     }
-    
+
     //randomly select a member in the population according to its fitness
     //Uses fitness proportionate method
     selectOne(){
